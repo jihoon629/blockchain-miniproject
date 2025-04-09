@@ -1,1 +1,17 @@
 basic-network/bin
+application/node_modules
+application/connection-org1.json
+application/wallet
+chaincode/abstore/go/go
+
+basic-network/channel-artifacts
+basic-network/organizations/ordererOrganizations
+basic-network/organizations/peerOrganizations
+basic-network/system-genesis-block
+
+basic-network/organizations/fabric-ca/org1
+basic-network/organizations/fabric-ca/org2
+basic-network/organizations/fabric-ca/org3
+
+explorer/pgdata
+explorer/wallet
