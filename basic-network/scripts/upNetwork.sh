@@ -21,7 +21,7 @@ for (( c=0; c<$#; c++ ))
 do
  case ${args[$c]} in
    org1peer0)
-     docker-compose -f docker-compose-test-net.yaml -f docker-compose-test-net.yaml up -d cli
+     docker-compose -f docker-compose-test-net.yaml up -d cli
      ;;
    orderer)
      docker-compose -f docker-compose-test-net.yaml up -d orderer.example.com

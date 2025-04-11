@@ -1,22 +1,22 @@
 #!/bin/bash
 
 echo "CA 컨테이너 및 노드 컨테이너 삭제"
-cd $GOPATH/src/dev-mode/basic-network/docker
-docker-compose -f docker-compose-ca.yaml down --volumes
-docker-compose -f docker-compose-test-net.yaml down --volumes --remove-orphans
 
 docker rm -f $(docker ps -aq)
-docker rmi -f $(docker images dev-* -q)
-docker volume prune -f
-docker network prune -f
+docker rmi $(docker images dev-* -q)
+docker system prune --volumes
+docker volume rm $(docker volume ls -q)
+
+cd $GOPATH/src/dev-mode/basic-network/docker
+docker-compose -f docker-compose-test-net.yaml down --volumes --remove-orphans
 
 echo "프로젝트 인증서 및 트랜잭션 정보 삭제"
 ## 프로젝트 인증서 및 트랜잭션 정보 삭제s
 cd $GOPATH/src/dev-mode/basic-network
-rm -fr channel-artifacts
-rm -fr organizations/ordererOrganizations
-rm -fr organizations/peerOrganizations
-rm -fr system-genesis-block
+sudo rm -fr channel-artifacts
+sudo rm -fr organizations/ordererOrganizations
+sudo rm -fr organizations/peerOrganizations
+sudo rm -fr system-genesis-block
 
 echo "CA 관련 파일 삭제"
 ## CA 관련 파일 삭제
