@@ -28,12 +28,13 @@ import (
 type ABstore struct {
 	contractapi.Contract
 }
+var Admin = "Admin"
 
-func (t *ABstore) Init(ctx contractapi.TransactionContextInterface, A string, Aval int, B string, Bval int, C string, Cval int) error {
+func (t *ABstore) Init(ctx contractapi.TransactionContextInterface, A string, Aval int, B string, Bval int) error {
 	fmt.Println("ABstore Init")
 	var err error
 	// Initialize the chaincode
-	fmt.Printf("Aval = %d, Bval = %d, Cval = %d\n", Aval, Bval, Cval)
+	fmt.Printf("Aval = %d, Bval = %d\n", Aval, Bval)
 	// Write the state to the ledger
 	err = ctx.GetStub().PutState(A, []byte(strconv.Itoa(Aval)))
 	if err != nil {
@@ -45,7 +46,7 @@ func (t *ABstore) Init(ctx contractapi.TransactionContextInterface, A string, Av
 		return err
 	}
 
-	err = ctx.GetStub().PutState(C, []byte(strconv.Itoa(Cval)))
+	err = ctx.GetStub().PutState(Admin, []byte("0"))
 	if err != nil {
 		return err
 	}
@@ -54,11 +55,11 @@ func (t *ABstore) Init(ctx contractapi.TransactionContextInterface, A string, Av
 }
 
 // Transaction makes payment of X units from A to B
-func (t *ABstore) Invoke(ctx contractapi.TransactionContextInterface, A, B, C string, X int) error {
+func (t *ABstore) Invoke(ctx contractapi.TransactionContextInterface, A, B string, X int) error {
 	var err error
 	var Aval int
 	var Bval int
-	var Cval int
+	var Adminval int
 	// Get the state from the ledger
 	// TODO: will be nice to have a GetAllState call to ledger
 	Avalbytes, err := ctx.GetStub().GetState(A)
@@ -79,20 +80,20 @@ func (t *ABstore) Invoke(ctx contractapi.TransactionContextInterface, A, B, C st
 	}
 	Bval, _ = strconv.Atoi(string(Bvalbytes))
 
-	Cvalbytes, err := ctx.GetStub().GetState(C)
+	Adminvalbytes, err := ctx.GetStub().GetState(Admin)
 	if err != nil {
 		return fmt.Errorf("Failed to get state")
 	}
-	if Cvalbytes == nil {
+	if Adminvalbytes == nil {
 		return fmt.Errorf("Entity not found")
 	}
-	Cval, _ = strconv.Atoi(string(Cvalbytes))
+	Adminval, _ = strconv.Atoi(string(Adminvalbytes))
 
 	// Perform the execution
 	Aval = Aval - X
 	Bval = Bval + ( X - X / 10 )
-	Cval = Cval + ( X / 10)
-	fmt.Printf("Aval = %d, Bval = %d Cval = %d\n", Aval, Bval, Cval)
+	Adminval = Adminval + ( X / 10)
+	fmt.Printf("Aval = %d, Bval = %d Adminval = %d\n", Aval, Bval, Adminval)
 
 	// Write the state back to the ledger
 	err = ctx.GetStub().PutState(A, []byte(strconv.Itoa(Aval)))
@@ -105,7 +106,7 @@ func (t *ABstore) Invoke(ctx contractapi.TransactionContextInterface, A, B, C st
 		return err
 	}
 
-	err = ctx.GetStub().PutState(C, []byte(strconv.Itoa(Cval)))
+	err = ctx.GetStub().PutState(Admin, []byte(strconv.Itoa(Adminval)))
 	if err != nil {
 		return err
 	}
@@ -144,6 +145,25 @@ func (t *ABstore) Query(ctx contractapi.TransactionContextInterface, A string) (
 	fmt.Printf("Query Response:%s\n", jsonResp)
 	return string(Avalbytes), nil
 }
+
+func (t *ABstore) GetAllQuery(ctx contractapi.TransactionContextInterface) ([]string, error) {
+    resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+    if err != nil {
+        return nil, err
+    }
+    defer resultsIterator.Close()
+    var wallet []string
+    for resultsIterator.HasNext() {
+        queryResponse, err := resultsIterator.Next()
+        if err != nil {
+            return nil, err
+        }
+        jsonResp := "{\"Name\":\"" + string(queryResponse.Key) + "\",\"Amount\":\"" + string(queryResponse.Value) + "\"}"
+        wallet = append(wallet, jsonResp)
+    }
+    return wallet, nil
+}
+
 
 func main() {
 	cc, err := contractapi.NewChaincode(new(ABstore))
