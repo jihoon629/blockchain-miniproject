@@ -82,6 +82,9 @@ elif [ "$1" == "start" ]; then
  joinChannel createChannel
  joinChannel joinChannel
  joinChannel updateAnchor
+ sleep 2
+ runCAdev
+
 else
  echo -n "unknown parameter"
  exit 1
