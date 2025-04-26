@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
  <head>
-   <title>Hyperledger Fabric AB Store Application</title>
+   <title>하이퍼 레져 프론트 실습</title>
 
    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
@@ -9,70 +9,335 @@
    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.min.js"></script>
 
    <style type="text/css">
-     header{
-       background-color: lightgray;
-       font-size:20px;
-       padding:20px;
-     }
-     header, .form-group{
-       margin-bottom: 3%;
+    /* 기본 폰트 및 배경 설정 */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6; /* 약간 다른 부드러운 배경색 */
+      padding-top: 20px;
+      padding-bottom: 40px; /* 하단 여백 추가 */
+    }
+
+    /* 헤더 스타일 */
+    header {
+      background-color: #4a6fa5; /* 차분한 파란색 계열 */
+      color: white;
+      font-size: 22px; /* 살짝 키움 */
+      font-weight: 600;
+      padding: 15px 25px; /* 여백 조정 */
+      margin-bottom: 40px; /* 헤더 아래 간격 더 확보 */
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    /* header 안의 div 스타일은 기본값 사용 */
+
+    /* 메인 컨텐츠 영역 (body id 활용) */
+    #body {
+      max-width: 750px; /* 최대 너비 설정 */
+      margin: 0 auto; /* 중앙 정렬 */
+      background-color: #ffffff; /* 흰색 배경 */
+      padding: 30px 40px; /* 내부 여백 */
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    }
+
+    /* 섹션 (form-group) 스타일 */
+    /* 첫번째 레벨의 form-group (Init, Query 섹션)만 타겟 */
+    #body > .form-group {
+      border: 1px solid #e3e3e3;
+      border-radius: 6px;
+      padding: 25px;
+      margin-bottom: 35px; /* 섹션 간 간격 */
+      background-color: #fdfdff;
+      width: 100%; /* 너비 강제 (기존 50% 오버라이드) */
+    }
+
+    /* 섹션 제목 (label) 스타일 */
+    #body > .form-group > label {
+      font-size: 20px; /* 기존 크기 유지 */
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 20px; /* 제목 아래 여백 */
+      display: block; /* 라벨이 한 줄을 차지하도록 */
+      border-bottom: 1px solid #eee; /* 제목 아래 구분선 */
+      padding-bottom: 10px; /* 구분선과의 간격 */
+    }
+
+    /* 입력 필드 (form-control) 스타일 */
+    .form-control {
+      /* margin: 8px; /* 기존 마진 제거 */
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      padding: 8px 12px; /* 내부 여백 조정 */
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.075); /* 내부 그림자 */
+      margin-bottom: 15px; /* 필드 아래 여백 */
+      /* width: 100%; /* 필요 시 너비 조정 */
+    }
+    .form-control:focus { /* 포커스 시 테두리 강조 */
+       border-color: #4a6fa5;
+       box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+    }
+
+    /* Query, Delete 섹션의 p 태그 안 입력 필드 너비 조정 */
+    #body > .form-group p .form-control {
+        display: inline-block; /* 버튼과 같은 줄에 놓기 위해 */
+        width: calc(100% - 100px); /* 버튼 너비 고려하여 조정 (Delete 버튼 포함) */
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+     /* Query, Delete 섹션 버튼 정렬 */
+    #body > .form-group p .btn {
+        vertical-align: middle;
+        padding: 8px 18px; /* 버튼 크기 일관성 */
+    }
+
+
+    /* 버튼 스타일 */
+    .btn-primary {
+      background-color: #5a8bcd; /* 버튼 색상 변경 */
+      border-color: #5a8bcd;
+      padding: 8px 18px; /* 패딩 조정 */
+      font-size: 15px;
+      border-radius: 4px;
+      transition: background-color 0.2s ease; /* 부드러운 호버 효과 */
+      margin-top: 5px;
+    }
+    .btn-primary:hover {
+      background-color: #4a6fa5;
+      border-color: #4a6fa5;
+    }
+    /* btn-danger, btn-info 스타일 추가 (Bootstrap 기본값 사용 또는 커스텀) */
+    .btn-danger {
+        color: #fff;
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    .btn-danger:hover {
+        color: #fff;
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
+    .btn-info {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+     .btn-info:hover {
+        color: #fff;
+        background-color: #138496;
+        border-color: #117a8b;
+    }
+
+
+    /* 성공 메시지 스타일 */
+    .success-message {
+      color: #28a745; /* 초록색 */
+      background-color: #e9f7ef;
+      border: 1px solid #a6d7b5;
+      padding: 10px 15px;
+      margin-top: 10px; /* 위쪽 여백 */
+      margin-bottom: 20px; /* 아래쪽 여백 */
+      border-radius: 4px;
+      font-weight: bold;
+      /* display: inline-block; /* 블록으로 변경하여 한 줄 차지 */
+      display: block;
+      width: 100%; /* 너비 100% */
+      box-sizing: border-box; /* 패딩 포함하여 너비 계산 */
+    }
+
+    /* 에러 메시지 스타일 */
+    .error-message {
+       color: #dc3545; /* 빨간색 */
+       background-color: #f8d7da;
+       border: 1px solid #f5c6cb;
+       padding: 10px 15px;
+       margin-top: 10px;
+       margin-bottom: 20px;
+       border-radius: 4px;
+       font-weight: bold;
+       /* display: inline-block; */
+       display: block;
+       width: 100%;
+       box-sizing: border-box;
      }
 
-     .form-group{
-       width:50%;
+
+    /* hr 구분선 스타일 */
+    hr {
+        border: 0;
+        height: 1px;
+        background-color: #ccc;
+        margin-top: 40px; /* 구분선 위 간격 */
+        margin-bottom: 40px; /* 구분선 아래 간격 */
+    }
+
+    /* placeholder 스타일 (선택 사항) */
+    ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+      color: #aaa;
+      opacity: 1; /* Firefox */
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10-11 */
+      color: #aaa;
+    }
+    ::-ms-input-placeholder { /* Microsoft Edge */
+      color: #aaa;
+    }
+
+    /* pre 태그 스타일 (선택 사항) */
+    pre {
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        white-space: pre-wrap; /* 자동 줄바꿈 */
+        word-wrap: break-word; /* 긴 단어 줄바꿈 */
+        max-height: 300px; /* 최대 높이 제한 (스크롤 생성) */
+        overflow-y: auto; /* 세로 스크롤 */
+        margin: 0; /* 불필요한 마진 제거 */
+        box-sizing: border-box;
+        width: 100%;
+    }
+    .result-table {
+         width: 100%;
+         margin-top: 15px;
+         border-collapse: collapse; /* 테이블 테두리 합치기 */
      }
-     #body{
-       margin-left:3%;
-       margin-right:3%;
+     .result-table th, .result-table td {
+         border: 1px solid #ddd; /* 셀 테두리 */
+         padding: 8px 12px; /* 셀 내부 여백 */
+         text-align: left; /* 텍스트 왼쪽 정렬 */
      }
-     .form-control{
-       margin: 8px;
+     .result-table th {
+         background-color: #f2f2f2; /* 헤더 배경색 */
+         font-weight: bold;
      }
-     label{
-       font-size:20px;
+     .result-table tr:nth-child(even) {
+         background-color: #f9f9f9; /* 짝수 행 배경색 */
+     }
+     .result-table tr:hover {
+         background-color: #f1f1f1; /* 행 호버 효과 */
+     }
+     /* 테이블 컨테이너 (스크롤 등) */
+     .table-container {
+         max-height: 400px; /* 최대 높이 설정 */
+         overflow-y: auto; /* 세로 스크롤 생성 */
+         margin-bottom: 15px; /* 테이블 아래 여백 */
+         border: 1px solid #ddd; /* 컨테이너 테두리 (선택 사항) */
+         border-radius: 4px;
      }
    </style>
  </head>
+
  <body ng-app="application" ng-controller="AppCtrl">
     <header>
       <div id="left_header">Hyperledger Fabric AB Store Application</div>
     </header>
     <div id="body">
-        <div class="form-group">
-            <label>Init</label>
-            <h5 style="color:green;margin-bottom:2%" id="success_init">{{init_ab}}</h5>
-            <br>
-            A: <input class="form-control" type="text" placeholder="Ex: Hyper" ng-model="abstore.a">
-            A Value: <input class="form-control" type="text" placeholder="Ex: 100" ng-model="abstore.aval">
-            B: <input class="form-control" type="text" placeholder="Ex: Ledger" ng-model="abstore.b">
-            B Value: <input class="form-control" type="text" placeholder="Ex: 0" ng-model="abstore.bval">
-            <input id="initAB" type="submit" value="Create" class="btn btn-primary" ng-click="initAB()">
-          </div>
-          <div class="form-group">
-            <label>Invoke</label>
-            <h5 style="color:green;margin-bottom:2%" id="success_init">{{invoke_ab}}</h5>
-            <br>
-            A: <input class="form-control" type="text" placeholder="Ex: Hyper" ng-model="abstore.a">
-            B: <input class="form-control" type="text" placeholder="Ex: Ledger" ng-model="abstore.b">
-            Value: <input class="form-control" type="text" placeholder="Ex: 0" ng-model="abstore.value">
-            <input id="invokeAB" type="submit" value="Create" class="btn btn-primary" ng-click="invokeAB()">
-          </div>
-          <div class="form-group">
-            <label>Delete</label>
-            <h5 style="color:green;margin-bottom:2%" id="success_init">{{delete_ab}}</h5>
-            <br>
-            Name: <input class="form-control" type="text" placeholder="Ex: Hyper" ng-model="abstore.a">
-            <input id="deleteAB" type="submit" value="Create" class="btn btn-primary" ng-click="deleteAB()">
-          </div>
-      <hr>
+
       <div class="form-group">
-        <h5 style="color:green;margin-bottom:2%" id="success_qurey">{{query_ab}}</h5>
-        <label>Query</label>
-        <p><input class="form-control" type="text" placeholder="Ex: A" ng-model="walletid">
-        <input id="queryAB" type="submit" value="Search" class="btn btn-primary" ng-click="queryAB()"></p>
+        <label>지갑 생성</label>
+        <!-- 인라인 스타일 제거, 클래스 적용, ng-show 사용 -->
+        <h5 id="success_init" class="success-message" ng-show="init_ab">{{init_ab}}</h5>
+        <br>
+        지갑생성 <input class="form-control" type="text" placeholder="아이디 입력" ng-model="abstore.a">
+        <input class="form-control" type="hidden" placeholder="Ex: 100" ng-model="abstore.aval" ng-init="abstore.aval=0">
+        <input id="initAB" type="submit" value="Initialize" class="btn btn-primary" ng-click="initAB()">
       </div>
-    </div>
+
+      <div class="form-group">
+        <label>입금 (현재 ID: {{ storedUserId }})</label> <!-- 현재 ID 표시 (선택 사항) -->
+         <!-- 성공/실패 메시지 표시 -->
+        <h5 id="success_deposit" class="success-message" ng-show="deposit_msg">{{deposit_msg}}</h5>
+        <h5 id="error_deposit" class="error-message" ng-show="deposit_err">{{deposit_err}}</h5>
+        <br>
+        <!-- ID 입력 필드 제거됨 -->
+        Amount: <input class="form-control" type="number" placeholder="Ex: 50" ng-model="deposit.amount">
+        <input id="depositMoneyBtn" type="submit" value="Deposit" class="btn btn-info" ng-click="depositMoney()">
+      </div>
+
+      <div class="form-group">
+        <label>출금 (현재 ID: {{ storedUserId }})</label> <!-- 현재 ID 표시 (선택 사항) -->
+         <!-- 성공/실패 메시지 표시 (출금 관련 변수 사용) -->
+        <h5 id="success_withdraw" class="success-message" ng-show="withdraw_msg">{{withdraw_msg}}</h5>
+        <h5 id="error_withdraw" class="error-message" ng-show="withdraw_err">{{withdraw_err}}</h5>
+        <br>
+        <!-- ID 입력 필드 제거됨 -->
+        Amount: <input class="form-control" type="number" placeholder="Ex: 30" ng-model="withdraw.amount"> <!-- ng-model 수정 -->
+        <input id="withdrawMoneyBtn" type="submit" value="Withdraw" class="btn btn-warning" ng-click="withdrawMoney()"> <!-- 버튼 ID, value, ng-click 수정, 클래스 변경(선택) -->
+      </div>
+
+      <hr>
+
+      <div class="form-group">
+        <label>Query Account</label>
+         <!-- 인라인 스타일 제거, 클래스 적용, ng-show 사용 -->
+        <h5 id="success_qurey" class="success-message" ng-show="query_ab"><pre>{{query_ab}}</pre></h5>
+        <!-- Query 에러 메시지 표시 영역 추가 -->
+        <h5 id="error_query" class="error-message" ng-show="query_ab_error">{{query_ab_error}}</h5>
+        <br>
+        <p>Account Name: <input class="form-control" type="text" placeholder="Ex: Hyper" ng-model="walletid">
+        <input id="queryAB" type="submit" value="Query" class="btn btn-primary" ng-click="queryAB()"></p>
+      </div>
+
+      <hr>
+
+      <div class="form-group">
+        <label>Invoke Transaction (Transfer)</label>
+        <!-- 클래스 적용 확인 -->
+        <h5 id="success_invoke" class="success-message" ng-show="invoke_result">{{invoke_result}}</h5>
+        <h5 id="error_invoke" class="error-message" ng-show="invoke_error">{{invoke_error}}</h5>
+        <br>
+        From Account (A): <input class="form-control" type="text" placeholder="Ex: Hyper" ng-model="invokeData.A">
+        To Account (B): <input class="form-control" type="text" placeholder="Ex: Ledger" ng-model="invokeData.B">
+        Amount (X): <input class="form-control" type="number" placeholder="Ex: 10" ng-model="invokeData.X">
+        <input id="invoke" type="submit" value="Transfer" class="btn btn-primary" ng-click="invoke()">
+      </div>
+
+      <hr>
+
+      <div class="form-group">
+        <label>Delete Account</label>
+         <!-- 클래스 적용 확인 -->
+        <h5 id="success_delete" class="success-message" ng-show="delete_result">{{delete_result}}</h5>
+        <h5 id="error_delete" class="error-message" ng-show="delete_error">{{delete_error}}</h5>
+        <br>
+        <p>Account Name: <input class="form-control" type="text" placeholder="Ex: TempAccount" ng-model="deleteName">
+        <input id="delete" type="submit" value="Delete" class="btn btn-danger" ng-click="deleteAccount()"></p>
+      </div>
+
+      <hr>
+
+      <div class="form-group">
+        <label>Query All Accounts</label>
+         <!-- 클래스 적용 확인 -->
+        <h5 id="error_query_all" class="error-message" ng-show="query_all_error">{{query_all_error}}</h5>
+
+        <div class="table-container" ng-show="query_all_result && query_all_result.length > 0">
+          <table class="result-table">
+              <thead>
+                  <tr>
+                      <th>Name</th>
+                      <th>Amount</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <!-- ng-repeat으로 결과 배열 반복 -->
+                  <tr ng-repeat="account in query_all_result track by $index"> <!-- track by $index 추가 -->
+                      <td>{{account.Name}}</td>
+                      <td>{{account.Amount}}</td>
+                  </tr>
+              </tbody>
+          </table>
+      </div>
+      <!-- 데이터 없을 때 메시지 (선택 사항) -->
+      <p ng-show="query_all_result && query_all_result.length === 0">No accounts found.</p>
+
+      <br>
+              <!-- <button id="queryAll" class="btn btn-info" ng-click="queryAll()">Query All</button> -->
+      </div>
+
+    </div> <!-- end of #body -->
+
   </body>
   <script type="text/javascript" src="app.js"> </script>
  </html>
- 
