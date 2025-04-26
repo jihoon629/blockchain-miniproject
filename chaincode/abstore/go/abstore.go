@@ -81,10 +81,6 @@ func (t *ABstore) WithdrawMoney(ctx contractapi.TransactionContextInterface, id 
 	return nil // 성공 시 nil 반환
 }
 
-
-
-
-
 func (t *ABstore) DepositMoney(ctx contractapi.TransactionContextInterface, id string, amountStr string) error {
 	fmt.Printf("DepositMoney called for ID: %s, Amount: %s\n", id, amountStr)
 
@@ -143,7 +139,7 @@ func (t *ABstore) Init(ctx contractapi.TransactionContextInterface, A string, Av
 
 
 	return nil
-}
+} 
 
 // ✅ 체인코드 Init
 // func (t *ABstore) Init(ctx contractapi.TransactionContextInterface, A string, Aval int, B string, Bval int) error {

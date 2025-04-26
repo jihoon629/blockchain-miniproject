@@ -266,7 +266,80 @@
         <input id="withdrawMoneyBtn" type="submit" value="Withdraw" class="btn btn-warning" ng-click="withdrawMoney()"> <!-- 버튼 ID, value, ng-click 수정, 클래스 변경(선택) -->
       </div>
 
+
+      <div class="form-group">
+        <label>상품 등록</label>
+        <!-- 성공/실패 메시지 표시 (상품 등록 관련 변수 사용) -->
+        <h5 id="success_create_item" class="success-message" ng-show="create_item_msg">{{create_item_msg}}</h5>
+        <h5 id="error_create_item" class="error-message" ng-show="create_item_error">{{create_item_error}}</h5>
+        <br>
+        상품 ID: <input class="form-control" type="text" placeholder="상품 고유 ID (예: item001)" ng-model="itemData.id">
+        상품명: <input class="form-control" type="text" placeholder="상품 이름 (예: 중고 노트북)" ng-model="itemData.name">
+        가격: <input class="form-control" type="number" placeholder="숫자만 입력 (예: 500000)" ng-model="itemData.price">
+        판매자 ID: <input class="form-control" type="text" placeholder="판매자 지갑 ID" ng-model="itemData.seller">
+        <input id="createItemBtn" type="submit" value="Register Item" class="btn btn-success" ng-click="createItem()"> <!-- 버튼 스타일 변경 (선택) -->
+      </div>
+      <div class="form-group">
+        <label>Query All Items</label>
+        <!-- 에러 메시지 표시 -->
+        <h5 id="error_query_all_items" class="error-message" ng-show="query_all_items_error">{{query_all_items_error}}</h5>
+
+        <!-- 상품 목록 테이블 -->
+        <div class="table-container" ng-show="allItems && allItems.length > 0">
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Seller</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- ng-repeat으로 상품 배열 반복 -->
+              <tr ng-repeat="item in allItems track by item.id">
+                <td>{{item.id}}</td>
+                <td>{{item.name}}</td>
+                <td>{{item.price}}</td>
+                <td>{{item.seller}}</td>
+                <td>{{item.status}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- 데이터 없을 때 메시지 -->
+        <p ng-show="allItems && allItems.length === 0">No items found.</p>
+
+        <br>
+        <button id="queryAllItemsBtn" class="btn btn-info" ng-click="queryAllItems()">Query All Items</button>
+      </div>
       <hr>
+      <div class="form-group">
+        <label>Escrow Transaction (현재 사용자: {{ storedUserId }})</label>
+        <!-- 에스크로 액션 성공/오류 메시지 -->
+        <h5 id="success_escrow_action" class="success-message" ng-show="escrow_action_msg">{{escrow_action_msg}}</h5>
+        <h5 id="error_escrow_action" class="error-message" ng-show="escrow_action_error">{{escrow_action_error}}</h5>
+        <!-- 에스크로 조회 오류 메시지 -->
+        <h5 id="error_query_escrow" class="error-message" ng-show="query_escrow_error">{{query_escrow_error}}</h5>
+        <br>
+        Escrow ID: <input class="form-control" type="text" placeholder="거래 식별 ID (예: trade001)" ng-model="escrowData.id">
+        Amount (for Confirm): <input class="form-control" type="number" placeholder="거래 금액 (숫자만)" ng-model="escrowData.amount">
+
+        <!-- 액션 버튼들 -->
+        <button id="buyerConfirmBtn" class="btn btn-primary" ng-click="buyerConfirm()">Buyer Confirm</button>
+        <button id="sellerConfirmBtn" class="btn btn-primary" ng-click="sellerConfirm()">Seller Confirm</button>
+        <button id="finalizeEscrowBtn" class="btn btn-success" ng-click="finalizeEscrow()">Finalize Escrow</button>
+        <button id="queryEscrowBtn" class="btn btn-info" ng-click="queryEscrow()">Query Escrow Status</button>
+
+        <!-- 에스크로 조회 결과 표시 영역 -->
+        <div id="success_query_escrow" ng-show="escrowQueryResult">
+            <br>
+            <strong>Escrow Details ({{ escrowData.id }}):</strong>
+            <pre>{{ escrowQueryResult | json }}</pre> <!-- JSON 형식으로 예쁘게 출력 -->
+        </div>
+      </div>
+      <!-- === 에스크로 거래 섹션 끝 === -->
 
       <div class="form-group">
         <label>Query Account</label>

@@ -10,19 +10,33 @@ app.controller('AppCtrl', function($scope, appFactory){
   $("#success_delete").hide();
   $("#success_query_all").hide();
   $("#success_deposit").hide();
-  $("#success_withdraw").hide(); // 출금 성공 메시지 숨김 추가
+  $("#success_withdraw").hide();
+  $("#success_create_item").hide();
+  $("#success_query_all_items").hide();
+  $("#success_escrow_action").hide(); // 에스크로 액션 성공 메시지
+  $("#success_query_escrow").hide(); // 에스크로 조회 성공 메시지
   $("#error_invoke").hide();
   $("#error_delete").hide();
   $("#error_query_all").hide();
   $("#error_query").hide();
   $("#error_deposit").hide();
-  $("#error_withdraw").hide(); // 출금 에러 메시지 숨김 추가
+  $("#error_withdraw").hide();
+  $("#error_create_item").hide();
+  $("#error_query_all_items").hide();
+  $("#error_escrow_action").hide(); // 에스크로 액션 에러 메시지
+  $("#error_query_escrow").hide(); // 에스크로 조회 에러 메시지
 
   $scope.query_all_result = [];
+  $scope.allItems = [];
   $scope.abstore = { a: '', aval: 0 };
-  $scope.deposit = { amount: null }; // 입금 폼 데이터 모델 (ID 없음)
-  $scope.withdraw = { amount: null }; // 출금 폼 데이터 모델 추가
-  $scope.storedUserId = sessionStorage.getItem('userId'); // 세션 ID 가져오기
+  $scope.deposit = { amount: null };
+  $scope.withdraw = { amount: null };
+  $scope.itemData = { id: '', name: '', price: null, seller: '' };
+  $scope.escrowData = { id: '', amount: null }; // 에스크로 관련 입력 데이터
+  $scope.escrowQueryResult = null; // 에스크로 조회 결과 저장
+  $scope.storedUserId = sessionStorage.getItem('userId');
+
+
 
   // (선택 사항) 세션 ID를 스코프에 바인딩하여 HTML에 표시
   $scope.storedUserId = sessionStorage.getItem('userId');
@@ -360,6 +374,250 @@ $scope.withdrawMoney = function(){
     });
 };
 
+
+$scope.createItem = function(){
+    console.log("Create Item button clicked. Item data:", $scope.itemData);
+    $("#success_create_item").hide(); // 이전 메시지 숨김
+    $("#error_create_item").hide();
+
+    const { id, name, price, seller } = $scope.itemData;
+
+    // 1. 입력값 유효성 검증
+    if (!id || !name || price === null || price === undefined || price <= 0 || isNaN(price) || !seller) {
+        $scope.create_item_error = "상품 ID, 이름, 가격(양수), 판매자 ID를 모두 올바르게 입력해주세요.";
+        $("#error_create_item").show();
+        return;
+    }
+
+    // 2. 판매자 ID를 세션 스토리지 ID로 설정 (선택 사항: 또는 직접 입력)
+    // 여기서는 입력된 seller 값을 사용하도록 함. 필요시 세션 ID로 대체 가능.
+    // const sellerId = sessionStorage.getItem('userId');
+    // if (!sellerId) { ... 에러 처리 ... }
+    // const itemDataToSend = { ...$scope.itemData, seller: sellerId };
+
+    // 3. 팩토리 함수 호출
+    appFactory.createItem($scope.itemData, function(data, status){
+        console.log("Response from /items (CreateItem):", status, data);
+        if(status === 200 && (data === "" || (data && data.result === "success"))) { // 성공 응답
+            $scope.create_item_msg = `상품 '${name}' (ID: ${id}) 등록 성공!`;
+            $("#success_create_item").show();
+            // 성공 시 입력 필드 초기화 (선택 사항)
+            $scope.itemData = { id: '', name: '', price: null, seller: '' };
+        } else { // 오류 응답
+            let errorMsg = "상품 등록 실패: ";
+            if (data && data.error) {
+                errorMsg += data.error; // 서버에서 보낸 오류 메시지 (예: "Item already exists")
+            } else if (typeof data === 'string' && data.length > 0) {
+                errorMsg += data;
+            } else {
+                errorMsg += `Status ${status}`;
+            }
+            $scope.create_item_error = errorMsg;
+            $("#error_create_item").show();
+        }
+        // 다른 섹션 메시지 숨김 (기존과 유사하게 추가)
+        $("#success_init").hide();
+        $("#success_qurey").hide();
+        $("#success_invoke").hide();
+        $("#success_delete").hide();
+        $("#success_query_all").hide();
+        $("#success_deposit").hide();
+        $("#error_init").hide();
+        $("#error_qurey").hide();
+        $("#error_invoke").hide();
+        $("#error_delete").hide();
+        $("#error_query_all").hide();
+        $("#error_deposit").hide();    });
+}; // $scope.createItem 끝
+
+$scope.queryAllItems = function(){
+    console.log("Query All Items button clicked.");
+    $("#success_query_all_items").hide();
+    $("#error_query_all_items").hide();
+    $scope.allItems = []; // 이전 결과 초기화
+
+    appFactory.queryAllItems(function(data, status){
+        console.log("Raw data received for items:", data);
+        console.log("Response status:", status);
+
+        if(status === 200) {
+            try {
+                let parsedData;
+                // 1. 데이터가 문자열이면 JSON.parse() 시도
+                if (typeof data === 'string') {
+                    parsedData = JSON.parse(data);
+                } else {
+                    // 문자열이 아니면 그대로 사용 (혹시 이미 파싱된 경우 대비)
+                    parsedData = data;
+                }
+
+                // 2. 파싱된 데이터가 배열인지 확인
+                if (Array.isArray(parsedData)) {
+                    $scope.allItems = parsedData; // 파싱된 배열을 할당
+                    console.log("Assigned scope data ($scope.allItems):", $scope.allItems);
+                } else {
+                    // 파싱 후에도 배열이 아닌 경우
+                    console.error("Parsed data is not an array:", parsedData);
+                    throw new Error("Unexpected data format after parsing for items list.");
+                }
+            } catch (e) {
+                console.error("Error processing queryAllItems result:", e);
+                // 오류 메시지를 조금 더 구체적으로 표시 (예: 파싱 오류 포함)
+                $scope.query_all_items_error = "상품 목록 처리 실패: " + e.message;
+                $("#error_query_all_items").show();
+            }
+        } else { // 오류 응답
+            console.error("API call failed for QueryAllItems.");
+            let errorMsg = "상품 목록 조회 실패: ";
+             if (data && data.error) {
+                errorMsg += data.error;
+            } else if (typeof data === 'string' && data.length > 0) {
+                errorMsg += data;
+            } else {
+                 errorMsg += `Status ${status}`;
+            }
+            $scope.query_all_items_error = errorMsg;
+            $("#error_query_all_items").show();
+        }
+         // 다른 섹션 메시지 숨김 (필요시)
+         // $("#success_init").hide(); ...
+    });
+}; // $scope.queryAllItems 끝
+
+
+
+
+// --- 에스크로 관련 함수들 ---
+
+  // ✅ 구매자 확인
+  $scope.buyerConfirm = function() {
+    console.log("Buyer Confirm button clicked. Escrow Data:", $scope.escrowData);
+    const escrowID = $scope.escrowData.id;
+    const amount = $scope.escrowData.amount;
+    $("#success_escrow_action").hide();
+    $("#error_escrow_action").hide();
+
+    if (!escrowID || amount === null || amount === undefined || amount <= 0 || isNaN(amount)) {
+      $scope.escrow_action_error = "에스크로 ID와 금액(양수)을 올바르게 입력해주세요.";
+      $("#error_escrow_action").show();
+      return;
+    }
+
+    appFactory.buyerConfirm(escrowID, amount, function(data, status) {
+      handleEscrowActionResponse("구매자 확인", data, status);
+    });
+  };
+
+  // ✅ 판매자 확인
+  $scope.sellerConfirm = function() {
+    console.log("Seller Confirm button clicked. Escrow Data:", $scope.escrowData);
+    const escrowID = $scope.escrowData.id;
+    const amount = $scope.escrowData.amount;
+    $("#success_escrow_action").hide();
+    $("#error_escrow_action").hide();
+
+    if (!escrowID || amount === null || amount === undefined || amount <= 0 || isNaN(amount)) {
+      $scope.escrow_action_error = "에스크로 ID와 금액(양수)을 올바르게 입력해주세요.";
+      $("#error_escrow_action").show();
+      return;
+    }
+
+    appFactory.sellerConfirm(escrowID, amount, function(data, status) {
+      handleEscrowActionResponse("판매자 확인", data, status);
+    });
+  };
+
+  // ✅ 거래 최종 완료
+  $scope.finalizeEscrow = function() {
+    console.log("Finalize Escrow button clicked. Escrow ID:", $scope.escrowData.id);
+    const escrowID = $scope.escrowData.id;
+    $("#success_escrow_action").hide();
+    $("#error_escrow_action").hide();
+
+    if (!escrowID) {
+      $scope.escrow_action_error = "에스크로 ID를 입력해주세요.";
+      $("#error_escrow_action").show();
+      return;
+    }
+
+    appFactory.finalizeEscrow(escrowID, function(data, status) {
+      handleEscrowActionResponse("거래 최종 완료", data, status);
+    });
+  };
+
+  // ✅ 에스크로 상태 조회
+  $scope.queryEscrow = function() {
+    console.log("Query Escrow button clicked. Escrow ID:", $scope.escrowData.id);
+    const escrowID = $scope.escrowData.id;
+    $("#success_query_escrow").hide();
+    $("#error_query_escrow").hide();
+    $scope.escrowQueryResult = null; // 이전 결과 초기화
+
+    if (!escrowID) {
+      $scope.query_escrow_error = "조회할 에스크로 ID를 입력해주세요.";
+      $("#error_query_escrow").show();
+      return;
+    }
+
+    appFactory.queryEscrow(escrowID, function(data, status) {
+      console.log("Response from /escrows/:id (QueryEscrow):", status, data);
+      if (status === 200) {
+        try {
+          let parsedData;
+          if (typeof data === 'string') {
+             parsedData = JSON.parse(data); // 문자열이면 파싱
+          } else {
+             parsedData = data; // 이미 객체면 그대로 사용
+          }
+          $scope.escrowQueryResult = parsedData; // 조회 결과 저장
+          // 성공 메시지 대신 결과 표시 영역에 데이터 표시 (pre 태그 사용 등)
+          $("#success_query_escrow").show(); // 또는 상세 결과 표시 영역을 보이게 처리
+          console.log("Escrow query result:", $scope.escrowQueryResult);
+        } catch (e) {
+          console.error("Error parsing QueryEscrow result:", e);
+          $scope.query_escrow_error = "에스크로 정보 처리 실패: " + e.message;
+          $("#error_query_escrow").show();
+        }
+      } else {
+        let errorMsg = "에스크로 조회 실패: ";
+        if (data && data.error) {
+          errorMsg += data.error;
+        } else if (typeof data === 'string' && data.length > 0) {
+          errorMsg += data;
+        } else {
+          errorMsg += `Status ${status}`;
+        }
+        $scope.query_escrow_error = errorMsg;
+        $("#error_query_escrow").show();
+      }
+       // 다른 섹션 메시지 숨김 ...
+    });
+  };
+
+  // 에스크로 액션(Confirm, Finalize) 공통 응답 처리 함수
+  function handleEscrowActionResponse(actionName, data, status) {
+    console.log(`Response from ${actionName}:`, status, data);
+    if (status === 200 && (data === "" || (data && data.result === "success"))) {
+      $scope.escrow_action_msg = `${actionName} 성공! (Escrow ID: ${$scope.escrowData.id})`;
+      $("#success_escrow_action").show();
+      // 성공 시 입력 필드 초기화 (선택 사항)
+      // $scope.escrowData = { id: '', amount: null };
+    } else {
+      let errorMsg = `${actionName} 실패: `;
+      if (data && data.error) {
+        errorMsg += data.error;
+      } else if (typeof data === 'string' && data.length > 0) {
+        errorMsg += data;
+      } else {
+        errorMsg += `Status ${status}`;
+      }
+      $scope.escrow_action_error = errorMsg;
+      $("#error_escrow_action").show();
+    }
+     // 다른 섹션 메시지 숨김 ...
+  }
+
+
 });
 app.factory('appFactory', function($http){
 
@@ -454,7 +712,63 @@ app.factory('appFactory', function($http){
             .error(function(output, status){ callback(output, status); }); // 실패 시
     };
 
+    // --- 새로운 팩토리 함수: 상품 등록 ---
+    factory.createItem = function(data, callback){
+        const { id, name, price, seller } = data;
+
+        // 간단한 유효성 검증 (컨트롤러에서 했지만 추가 가능)
+        if (!id || !name || price === undefined || price === null || price <= 0 || !seller) {
+             callback({ error: "Invalid item data provided to factory." }, 400);
+             return;
+        }
+
+        // GET 요청으로 /items 엔드포인트 호출
+        const url = `/items?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}&price=${price}&seller=${encodeURIComponent(seller)}`;
+        $http.get(url)
+            .success(function(output){ callback(output, 200); }) // 성공 시
+            .error(function(output, status){ callback(output, status); }); // 실패 시
+    };
 
 
+    factory.queryAllItems = function(callback){
+        // 서버에 '/items/all' 엔드포인트 필요
+        $http.get('/items/all')
+            .success(function(output){ callback(output, 200); }) // 성공 시
+            .error(function(output, status){ callback(output, status); }); // 실패 시
+    };
+
+
+        // ✅ 구매자 확인
+        factory.buyerConfirm = function(escrowId, amount, callback) {
+            const url = `/escrows/${encodeURIComponent(escrowId)}/buyer-confirm?amount=${amount}`;
+            $http.get(url)
+              .success(function(output){ callback(output, 200); })
+              .error(function(output, status){ callback(output, status); });
+          };
+      
+          // ✅ 판매자 확인
+          factory.sellerConfirm = function(escrowId, amount, callback) {
+            const url = `/escrows/${encodeURIComponent(escrowId)}/seller-confirm?amount=${amount}`;
+            $http.get(url)
+              .success(function(output){ callback(output, 200); })
+              .error(function(output, status){ callback(output, status); });
+          };
+      
+          // ✅ 거래 최종 완료
+          factory.finalizeEscrow = function(escrowId, callback) {
+            const url = `/escrows/${encodeURIComponent(escrowId)}/finalize`;
+            $http.get(url)
+              .success(function(output){ callback(output, 200); })
+              .error(function(output, status){ callback(output, status); });
+          };
+      
+          // ✅ 에스크로 상태 조회
+          factory.queryEscrow = function(escrowId, callback) {
+            const url = `/escrows/${encodeURIComponent(escrowId)}`;
+            $http.get(url)
+              .success(function(output){ callback(output, 200); })
+              .error(function(output, status){ callback(output, status); });
+          };
+      
     return factory;
  });
